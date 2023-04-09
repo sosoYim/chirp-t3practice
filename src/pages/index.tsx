@@ -2,6 +2,7 @@ import { type NextPage } from "next";
 import Head from "next/head";
 import { SignIn, SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
 import { api } from "@/utils/api";
+import type { Post } from "@prisma/client";
 
 const Home: NextPage = () => {
   const user = useUser();
@@ -20,7 +21,7 @@ const Home: NextPage = () => {
           <SignIn path="/sign-in" routing="path" signUpUrl="/sign-up" />
         </div>
         <div>
-          {data?.map((post) => (
+          {data?.map((post: Post) => (
             <div key={post.id}>{post.content}</div>
           ))}
         </div>
