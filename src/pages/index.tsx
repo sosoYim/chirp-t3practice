@@ -5,16 +5,33 @@ import { type RouterOutputs, api } from "@/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
-import { LoadingPage } from "@/components/loading";
+import { LoadingPage, LoadingSpinner } from "@/components/loading";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 dayjs.extend(relativeTime);
 
 const CreatePostWizard = () => {
   const { user } = useUser();
-  const { mutate: createPost } = api.posts.create.useMutation();
-
   const [content, setContent] = useState("");
+  const ctx = api.useContext();
+
+  const { mutate: createPost, isLoading: isPosting } =
+    api.posts.create.useMutation({
+      onSuccess: () => {
+        setContent("");
+        void ctx.posts.getAll.invalidate();
+      },
+      onError: (e) => {
+        const errorMessage = e.data?.zodError?.fieldErrors.content;
+        if (errorMessage && errorMessage[0]) {
+          toast.error(errorMessage[0]);
+        } else {
+          toast.error("Failed to post! Please try again later.");
+        }
+      },
+    });
+
   if (!user) return null;
 
   return (
@@ -26,13 +43,30 @@ const CreatePostWizard = () => {
         width={56}
         height={56}
       />
+
       <input
         placeholder="Type some emojis!"
         className="grow bg-transparent p-4 outline-none"
         value={content}
         onChange={(e) => setContent(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (content !== "") {
+              createPost({ content });
+            }
+          }
+        }}
       />
-      <button onClick={() => createPost({ content })}>Post</button>
+
+      {isPosting && (
+        <div className="flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      )}
+      {content !== "" && !isPosting && (
+        <button onClick={() => createPost({ content })}>Post</button>
+      )}
     </div>
   );
 };
