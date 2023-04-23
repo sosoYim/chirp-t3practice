@@ -35,7 +35,6 @@ const ProfilView: NextPage<{ username: string }> = ({ username }) => {
 
   if (!data) return <div>404</div>;
 
-  console.log(data);
   return (
     <>
       <Head>
