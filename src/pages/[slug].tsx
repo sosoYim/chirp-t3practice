@@ -4,6 +4,28 @@ import Head from "next/head";
 import { generateSSGHelper } from "@/server/helpers/ssgHelper";
 import { PageLayout } from "@/components/layout";
 import Image from "next/image";
+import { LoadingPage } from "@/components/loading";
+import { PostView } from "@/components/postview";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+
+dayjs.extend(relativeTime);
+
+const ProfileFeed = (props: { userId: string }) => {
+  const { data, isLoading } = api.posts.getPostByUserId.useQuery({
+    userId: props.userId,
+  });
+  if (isLoading) return <LoadingPage />;
+  if (!data || !data.length) return <div>User has not posted</div>;
+
+  return (
+    <div className="flex flex-col">
+      {data.map((fullPost) => (
+        <PostView {...fullPost} key={fullPost.post.id} />
+      ))}
+    </div>
+  );
+};
 
 const ProfilView: NextPage<{ username: string }> = ({ username }) => {
   // isLoading이 없음 => getStaticProps에서 캐시된 값을 사용한다.
@@ -36,6 +58,7 @@ const ProfilView: NextPage<{ username: string }> = ({ username }) => {
           data.username ?? ""
         }`}</div>
         <div className="w-full border-b border-slate-400" />
+        <ProfileFeed userId={data.id} />
       </PageLayout>
     </>
   );
